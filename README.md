@@ -3,7 +3,7 @@
 **Sidematter format** is a simple, universal convention for keeping metadata and assets
 alongside a primary document.
 It is a useful complement to
-[frontmatter-format](https://github.com/jlevy/frontmatter-format).
+[frontmatter format](https://github.com/jlevy/frontmatter-format).
 
 ## Motivation
 
@@ -42,9 +42,8 @@ sidematter files can easily be bundled together in a zip or tarball.
 
 ## Examples
 
-Some simple examples:
-
-Given a primary document `report.md`, the sidematter files would be:
+Sidematter format is easiest to illustrate by an example.
+Given a primary document `report.md`, some possible sidematter files would be:
 
 ```
 report.md
@@ -96,6 +95,20 @@ source_files:
   - raw_data.csv
   - market_trends.json
 ```
+
+If desired, simple YAML metadata could instead be inserted as frontmatter on the file
+itself, and omitted from the sidematter:
+
+```
+report.md              # Main file with frontmatter format metadata in YAML
+report.assets/         # Asset directory with extra files
+    figure1.png
+    diagram.svg
+    styles.css
+```
+
+The implementation there looks for both formats, so will read the metadata on either of
+these layouts seamlessly.
 
 ## Goals of this Approach
 
@@ -269,24 +282,28 @@ print(f"Assets: {list(data.assets_path.iterdir()) if data.assets_path else []}")
 
 ## FAQ
 
-* **Hasn’t this been done before?** Similar patterns exist in various tools (Jekyll’s
-  `_files/` directories, Hugo’s page bundles, etc.), but there’s no universal convention
-  that works across different tools and file types.
-  This format provides a simple, consistent approach.
+* **Hasn’t this been done before?**
 
-* **When should I use sidematter vs frontmatter?** Use **frontmatter format** for small,
-  essential metadata, especially on text files of any kind.
-  Use **sidematter format** for larger metadata, when the original file cannot be
-  modified or metadata that should be updated separately from the original file, or if
-  additional asset files are needed.
+  Similar patterns exist in various tools (Jekyll’s `_files/` directories, Hugo’s page
+  bundles, etc.), but there’s no universal convention that works across different tools
+  and file types. This format provides a simple, consistent approach.
 
-* **Does this work with version control?** Yes, of course.
-  Typically you would check in both metadata and assets, but if it’s easy to put
-  `*.assets/` or `*.meta.json` or `*.meta.yml` in `.gitignore` to avoid including them
-  in version control.
+* **When should I use sidematter vs frontmatter?**
 
-* **Can I use both YAML and JSON metadata?** Yes, tools should support either or even
-  both formats simultaneously.
+  Use **frontmatter format** for small, essential metadata, especially on text files of
+  any kind. Use **sidematter format** for larger metadata, when the original file cannot
+  be modified or metadata that should be updated separately from the original file, or
+  if additional asset files are needed.
+
+* **Does this work with version control?**
+
+  Yes, of course. Typically you would check in both metadata and assets, but if it’s easy
+  to put `*.assets/` or `*.meta.json` or `*.meta.yml` in `.gitignore` to avoid including
+  them in version control.
+
+* **Can I use both YAML and JSON metadata?**
+
+  Yes, tools should support either or even both formats simultaneously.
   The convention is that if present, JSON will be used first, since that is often
   auto-generated or faster to parse.
 
