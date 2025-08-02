@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Levy"
+    given-names: "Joshua"
+    email: "joshua@cal.berkeley.edu"
+title: "sidematter-format"
+version: 0.1.0
+date-released: 2024-08-02
+url: "https://github.com/jlevy/sidematter-format"
+license: MIT
+abstract: >-
+  Sidematter format is a simple, universal convention for keeping metadata and assets
+  alongside a primary document. It defines a minimal set of conventions for naming and 
+  resolving "sidecar files" in a consistent way.

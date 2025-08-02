@@ -7,13 +7,13 @@ Repository = "https://github.com/jlevy/sidematter-format"
 
 [project]
 name = "sidematter-format"
-description = "A simple format to associate metadata and assets with any file"
+description = "A convention for metadata and asset files alongside any document"
 authors = [
     { name="Joshua Levy", email="joshua@cal.berkeley.edu" },
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.10,<4.0"
 dynamic = ["version"]
 
 # https://pypi.org/classifiers/
@@ -23,9 +23,11 @@ classifiers = [
     "Development Status :: 4 - Beta",
     # "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -38,6 +40,8 @@ classifiers = [
 # ---- Main dependencies ----
 
 dependencies = [
+    "frontmatter-format>=0.2.1",
+    "strif>=3.0.1",
 ]
 
 
