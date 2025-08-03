@@ -11,7 +11,7 @@ from sidematter_format import (
     Sidematter,
     SidematterError,
     SidematterPath,
-    smf_read,
+    resolve_sidematter,
 )
 
 ## Basic Path Property Tests
@@ -184,14 +184,14 @@ def test_load_meta_frontmatter_fallback():
 
         sp = SidematterPath(doc_path)
 
-        # With frontmatter_fallback=True (default)
+        # With use_frontmatter=True (default)
         meta = sp.load_meta()
         assert meta["title"] == "Frontmatter Title"
         assert meta["author"] == "John Doe"
         assert meta["tags"] == ["test", "frontmatter"]
 
-        # With frontmatter_fallback=False
-        meta_no_fallback = sp.load_meta(frontmatter_fallback=False)
+        # With use_frontmatter=False
+        meta_no_fallback = sp.load_meta(use_frontmatter=False)
         assert meta_no_fallback == {}
 
 
@@ -433,13 +433,13 @@ def test_copy_asset_custom_name():
 ## Convenience Function Tests
 
 
-def test_smf_read_empty():
-    """Test smf_read with no metadata or assets."""
+def test_resolve_sidematter_empty():
+    """Test resolve_sidematter with no metadata or assets."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
 
-        sidematter = smf_read(doc_path)
+        sidematter = resolve_sidematter(doc_path)
 
         assert isinstance(sidematter, Sidematter)
         assert sidematter.doc_path == doc_path
@@ -448,8 +448,8 @@ def test_smf_read_empty():
         assert sidematter.assets_path is None
 
 
-def test_smf_read_with_metadata():
-    """Test smf_read with metadata."""
+def test_resolve_sidematter_with_metadata():
+    """Test resolve_sidematter with metadata."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
@@ -459,14 +459,14 @@ def test_smf_read_with_metadata():
         test_data = {"title": "Test Document"}
         sp.write_meta(test_data)
 
-        sidematter = smf_read(doc_path)
+        sidematter = resolve_sidematter(doc_path)
 
         assert sidematter.meta_path == sp.meta_yaml
         assert sidematter.meta == test_data
 
 
-def test_smf_read_with_assets():
-    """Test smf_read with assets."""
+def test_resolve_sidematter_with_assets():
+    """Test resolve_sidematter with assets."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
@@ -476,25 +476,25 @@ def test_smf_read_with_assets():
         sp.assets_dir.mkdir()
         (sp.assets_dir / "test.png").touch()
 
-        sidematter = smf_read(doc_path)
+        sidematter = resolve_sidematter(doc_path)
 
         assert sidematter.assets_path == sp.assets_dir
 
 
-def test_smf_read_string_path():
-    """Test smf_read with string path."""
+def test_resolve_sidematter_string_path():
+    """Test resolve_sidematter with string path."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
 
         # Pass string instead of Path
-        sidematter = smf_read(str(doc_path))
+        sidematter = resolve_sidematter(str(doc_path))
 
         assert sidematter.doc_path == doc_path
 
 
-def test_smf_read_with_frontmatter():
-    """Test smf_read with frontmatter fallback."""
+def test_resolve_sidematter_with_frontmatter():
+    """Test resolve_sidematter with frontmatter fallback."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_content = dedent("""
@@ -507,14 +507,15 @@ def test_smf_read_with_frontmatter():
         """).strip()
         doc_path.write_text(doc_content)
 
-        # With frontmatter_fallback=True (default)
-        sidematter = smf_read(doc_path)
+        # With use_frontmatter=True (default)
+        sidematter = resolve_sidematter(doc_path)
+        assert sidematter.meta is not None
         assert sidematter.meta["title"] == "Document with Frontmatter"
         assert sidematter.meta["version"] == 1.0
         assert sidematter.meta_path is None  # No sidecar file
 
-        # With frontmatter_fallback=False
-        sidematter_no_fallback = smf_read(doc_path, frontmatter_fallback=False)
+        # With use_frontmatter=False
+        sidematter_no_fallback = resolve_sidematter(doc_path, use_frontmatter=False)
         assert sidematter_no_fallback.meta == {}
 
 
@@ -548,6 +549,6 @@ def test_full_workflow():
         assert loaded_meta == metadata
 
         # Test convenience function
-        sidematter = smf_read(doc_path)
+        sidematter = resolve_sidematter(doc_path)
         assert sidematter.meta == metadata
         assert sidematter.assets_path == sp.assets_dir

@@ -2,12 +2,12 @@ from .sidematter_format import (
     Sidematter,
     SidematterError,
     SidematterPath,
-    smf_read,
+    resolve_sidematter,
 )
 
 __all__ = [
     "SidematterError",
     "SidematterPath",
     "Sidematter",
-    "smf_read",
+    "resolve_sidematter",
 ]

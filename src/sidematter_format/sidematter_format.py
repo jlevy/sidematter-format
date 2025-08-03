@@ -9,6 +9,12 @@ from typing import Any, Literal
 from frontmatter_format import fmf_read_frontmatter, from_yaml_string, to_yaml_string
 from strif import atomic_output_file, copyfile_atomic
 
+META_NAME = "meta"
+JSON_SUFFIX = f".{META_NAME}.json"
+YAML_SUFFIX = f".{META_NAME}.yml"
+
+ASSETS_SUFFIX = "assets"
+
 
 class SidematterError(RuntimeError):
     """
@@ -23,30 +29,29 @@ class SidematterPath:
     locations plus helpers for reading / writing them.
     """
 
-    doc: Path
+    primary: Path
+    """The primary document path."""
 
     # Path properties (may not exist on disk)
 
     @property
     def meta_json(self) -> Path:
-        return self.doc.with_suffix(".meta.json")
+        return self.primary.with_suffix(JSON_SUFFIX)
 
     @property
     def meta_yaml(self) -> Path:
-        return self.doc.with_suffix(".meta.yml")
+        return self.primary.with_suffix(YAML_SUFFIX)
 
     @property
     def assets_dir(self) -> Path:
-        return self.doc.with_name(f"{self.doc.stem}.assets")
+        return self.primary.with_name(f"{self.primary.stem}.{ASSETS_SUFFIX}")
 
     # Metadata helpers
 
     def resolve_meta(self) -> Path | None:
         """
-        Return the first existing metadata path following the precedence order:
-        1. JSON (.meta.json)
-        2. YAML (.meta.yml)
-        Returns None if neither exists.
+        Return the first existing metadata path following the precedence order
+        (`.meta.json` then `.meta.yml`) or None if neither exists.
         """
         if self.meta_json.exists():
             return self.meta_json
@@ -54,15 +59,15 @@ class SidematterPath:
             return self.meta_yaml
         return None
 
-    def load_meta(self, *, frontmatter_fallback: bool = True) -> dict[str, Any]:
+    def load_meta(self, *, use_frontmatter: bool = True) -> dict[str, Any]:
         """
         Load metadata following the precedence order:
         1. JSON sidecar (.meta.json)
         2. YAML sidecar (.meta.yml)
-        3. YAML frontmatter in the document itself (if frontmatter_fallback=True and file exists)
+        3. YAML frontmatter in the document itself (if use_frontmatter is True)
 
         Args:
-            frontmatter_fallback: If True and no sidecar metadata file exists, attempt to read
+            use_frontmatter: If True and no sidecar metadata file exists, attempt to read
                 frontmatter from the document itself. Default is True.
 
         Returns:
@@ -81,14 +86,26 @@ class SidematterPath:
                 raise SidematterError(f"Error loading metadata: {p}") from e
 
         # Try frontmatter fallback if enabled and document exists
-        if frontmatter_fallback and self.doc.exists():
+        if use_frontmatter and self.primary.exists():
             try:
-                return fmf_read_frontmatter(self.doc) or {}
+                return fmf_read_frontmatter(self.primary) or {}
             except Exception:
                 # If frontmatter reading fails, just return empty metadata
                 return {}
 
         return {}
+
+    def resolve(self, *, parse_meta: bool = True, use_frontmatter: bool = True) -> Sidematter:
+        meta = None
+        if parse_meta:
+            meta = self.load_meta(use_frontmatter=use_frontmatter)
+
+        return Sidematter(
+            doc_path=self.primary,
+            meta_path=self.resolve_meta(),
+            meta=meta,
+            assets_path=self.resolve_assets(),
+        )
 
     def write_meta(
         self,
@@ -158,26 +175,25 @@ class SidematterPath:
         return target
 
 
-def smf_read(doc: str | Path, *, frontmatter_fallback: bool = True) -> Sidematter:
+def resolve_sidematter(
+    primary: str | Path, *, parse_meta: bool = True, use_frontmatter: bool = True
+) -> Sidematter:
     """
-    Simpler functional entry point that returns an *immutable* snapshot of the
-    sidematter.  (If you need mutability, stick with `SidematterPath`.)
+    Convenience function that returns an *immutable* snapshot of the sidematter
+    found for a given document, based on checking the expected paths.
 
     Args:
-        doc: Path to the document file.
-        frontmatter_fallback: If True and no sidecar files exist, attempt to read
+        primary: Path to the document file.
+        parse_meta: If True, parse the metadata from the document. Default is True.
+        use_frontmatter: If True and no sidecar files exist, attempt to read
             frontmatter from the document itself. Default is True.
 
     Returns:
         Sidematter object containing the document path, metadata path, metadata dict,
         and assets path.
     """
-    sp = SidematterPath(Path(doc))
-    return Sidematter(
-        doc_path=sp.doc,
-        meta_path=sp.resolve_meta(),
-        meta=sp.load_meta(frontmatter_fallback=frontmatter_fallback),
-        assets_path=sp.resolve_assets(),
+    return SidematterPath(Path(primary)).resolve(
+        parse_meta=parse_meta, use_frontmatter=use_frontmatter
     )
 
 
@@ -188,6 +204,19 @@ class Sidematter:
     """
 
     doc_path: Path
+
     meta_path: Path | None
-    meta: dict[str, Any]
+    """Path to the metadata file, if found."""
+
     assets_path: Path | None
+    """Path to the assets directory, if found."""
+
+    meta: dict[str, Any] | None
+    """Actual metadata, if parsed."""
+
+    @property
+    def path_list(self) -> list[Path]:
+        """
+        Return primary path as well as metadata and assets folder path, if they exist.
+        """
+        return [p for p in [self.doc_path, self.meta_path, self.assets_path] if p]
