@@ -4,14 +4,14 @@ requires-python = ">=3.10, <4.0"
 
 [[package]]
 name = "basedpyright"
-version = "1.31.0"
+version = "1.29.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodejs-wheel-binaries" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/23/6dc0df43c62fdec401b1ec3aea698ba50c5abfca25259e9f0208b34d7abe/basedpyright-1.31.0.tar.gz", hash = "sha256:900a573a525a0f66f884075c2a98711bb9478e44dc60ffdf182ef681bf8e2c76", size = 22062384, upload-time = "2025-07-16T11:37:29.189Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/4f/c0c12169a5373006ecd6bb8dfe1f8e4f2fd2d508be64b74b860a3f88baf3/basedpyright-1.29.5.tar.gz", hash = "sha256:468ad6305472a2b368a1f383c7914e9e4ff3173db719067e1575cf41ed7b5a36", size = 21962194, upload-time = "2025-06-30T10:39:58.973Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/85/cb46707458c514ae959fe139135d8f7231d95faf1c383a56979a3436b965/basedpyright-1.31.0-py3-none-any.whl", hash = "sha256:d7460ddcd3a2332b1c3fd738735d18bf2966d49aed67237efa1f19635199d414", size = 11538999, upload-time = "2025-07-16T11:37:26.446Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/a3/8293e5af46df07f76732aa33f3ceb8a7097c846d03257c74c0f5f4d69107/basedpyright-1.29.5-py3-none-any.whl", hash = "sha256:e7eee13bec8b3c20d718c6f3ef1e2d57fb04621408e742aa8c82a1bd82fe325b", size = 11476874, upload-time = "2025-06-30T10:39:54.662Z" },
 ]
 
 [[package]]
@@ -46,14 +46,14 @@ wheels = [
 
 [[package]]
 name = "frontmatter-format"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ruamel-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ef/bb/d05fa1ca60ac06820ed8f6ac6ec7f1861a338e00aa36a45a2602968465b2/frontmatter_format-0.2.1.tar.gz", hash = "sha256:07b622fa48b1511814140ff6319a0d10471d1feaef933289423676adf9682519", size = 426472, upload-time = "2025-03-29T20:34:48.716Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/ad/a4c8327bcc053225a8f804b95f60f29947c492db13289ac1578518be06db/frontmatter_format-0.2.2.tar.gz", hash = "sha256:5c7a2da232c9a6a861b76bc0756f6cabfb9445782dcf6b49dcdf555fdb5dc43e", size = 435830, upload-time = "2025-08-03T18:56:36.904Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/c2/04e825139dea2eac9366ae0c1bac8c796e766e02c17760f09d2b44579350/frontmatter_format-0.2.1-py3-none-any.whl", hash = "sha256:6bede4c8a52df515a8559d23653ea3f7bf599e0c621b047c283d7199be0a826f", size = 13336, upload-time = "2025-03-29T20:34:47.171Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/21/fe73c1a1ca5e36d4fc990bc8f977b7d6d42397b3925b4a73bfae3ad90dbc/frontmatter_format-0.2.2-py3-none-any.whl", hash = "sha256:77b332f619781518b849cea3534f27cddadc59ba07884f967dbf1a77e0052703", size = 13926, upload-time = "2025-08-03T18:56:35.61Z" },
 ]
 
 [[package]]
@@ -283,13 +283,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "frontmatter-format", specifier = ">=0.2.1" },
+    { name = "frontmatter-format", specifier = ">=0.2.2" },
     { name = "strif", specifier = ">=3.0.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "basedpyright", specifier = ">=1.29.1" },
+    { name = "basedpyright", specifier = "==1.29.5" },
     { name = "codespell", specifier = ">=2.4.1" },
     { name = "funlog", specifier = ">=0.2.1" },
     { name = "pytest", specifier = ">=8.3.5" },
