@@ -35,11 +35,11 @@ class SidematterPath:
     # Path properties (may not exist on disk)
 
     @property
-    def meta_json(self) -> Path:
+    def meta_json_path(self) -> Path:
         return self.primary.with_suffix(JSON_SUFFIX)
 
     @property
-    def meta_yaml(self) -> Path:
+    def meta_yaml_path(self) -> Path:
         return self.primary.with_suffix(YAML_SUFFIX)
 
     @property
@@ -53,10 +53,10 @@ class SidematterPath:
         Return the first existing metadata path following the precedence order
         (`.meta.json` then `.meta.yml`) or None if neither exists.
         """
-        if self.meta_json.exists():
-            return self.meta_json
-        if self.meta_yaml.exists():
-            return self.meta_yaml
+        if self.meta_json_path.exists():
+            return self.meta_json_path
+        if self.meta_yaml_path.exists():
+            return self.meta_yaml_path
         return None
 
     def load_meta(self, *, use_frontmatter: bool = True) -> dict[str, Any]:
@@ -101,7 +101,7 @@ class SidematterPath:
             meta = self.load_meta(use_frontmatter=use_frontmatter)
 
         return Sidematter(
-            doc_path=self.primary,
+            primary=self.primary,
             meta_path=self.resolve_meta(),
             meta=meta,
             assets_path=self.resolve_assets(),
@@ -123,13 +123,13 @@ class SidematterPath:
             raise ValueError("fmt must be 'yaml' or 'json'")
 
         # Choose target path
-        p = self.meta_yaml if fmt == "yaml" else self.meta_json
+        p = self.meta_yaml_path if fmt == "yaml" else self.meta_json_path
 
         try:
             if data is None:
                 # Remove both sidecars if they exist
-                self.meta_json.unlink(missing_ok=True)
-                self.meta_yaml.unlink(missing_ok=True)
+                self.meta_json_path.unlink(missing_ok=True)
+                self.meta_yaml_path.unlink(missing_ok=True)
                 return p
 
             # Use atomic file writing to ensure integrity
@@ -138,14 +138,10 @@ class SidematterPath:
                     temp_path.write_text(data, encoding="utf-8")
                 elif fmt == "json":
                     temp_path.write_text(
-                        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-                        encoding="utf-8",
+                        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
                     )
                 else:  # YAML from dict
-                    temp_path.write_text(
-                        to_yaml_string(data, key_sort=key_sort),
-                        encoding="utf-8",
-                    )
+                    temp_path.write_text(to_yaml_string(data, key_sort=key_sort), encoding="utf-8")
             return p
         except Exception as e:
             raise SidematterError(f"Error writing metadata to {p}") from e
@@ -200,10 +196,11 @@ def resolve_sidematter(
 @dataclass(frozen=True)
 class Sidematter:
     """
-    Immutable snapshot of sidematter data.
+    Snapshot of sidematter filenames and metadata.
+    This is a pure, immutable data class; it does not touch the filesystem.
     """
 
-    doc_path: Path
+    primary: Path
 
     meta_path: Path | None
     """Path to the metadata file, if found."""
@@ -219,4 +216,30 @@ class Sidematter:
         """
         Return primary path as well as metadata and assets folder path, if they exist.
         """
-        return [p for p in [self.doc_path, self.meta_path, self.assets_path] if p]
+        return [p for p in [self.primary, self.meta_path, self.assets_path] if p]
+
+    def rename_as(self, new_primary: Path) -> Sidematter:
+        """
+        A convenience method for naming files: return a new Sidematter with the primary path
+        renamed and the sidematter paths updated accordingly.
+        """
+        new_sm = SidematterPath(new_primary)
+        new_meta_path = None
+        if self.meta_path is not None:
+            # Preserve the metadata format from the original
+            if self.meta_path.name.endswith(JSON_SUFFIX):
+                new_meta_path = new_sm.meta_json_path
+            elif self.meta_path.name.endswith(YAML_SUFFIX):
+                new_meta_path = new_sm.meta_yaml_path
+            else:
+                # Fallback: preserve whatever suffix the source has
+                new_meta_path = new_primary.with_suffix(self.meta_path.suffix)
+
+        new_assets_path = new_sm.assets_dir if self.assets_path is not None else None
+
+        return Sidematter(
+            primary=new_primary,
+            meta_path=new_meta_path,
+            meta=self.meta,
+            assets_path=new_assets_path,
+        )

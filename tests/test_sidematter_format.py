@@ -21,8 +21,8 @@ def test_path_properties():
     """Test basic path property transformations."""
     sp = SidematterPath(Path("report.md"))
 
-    assert sp.meta_json == Path("report.meta.json")
-    assert sp.meta_yaml == Path("report.meta.yml")
+    assert sp.meta_json_path == Path("report.meta.json")
+    assert sp.meta_yaml_path == Path("report.meta.yml")
     assert sp.assets_dir == Path("report.assets")
 
 
@@ -30,8 +30,8 @@ def test_path_properties_no_extension():
     """Test path properties for files without extensions."""
     sp = SidematterPath(Path("README"))
 
-    assert sp.meta_json == Path("README.meta.json")
-    assert sp.meta_yaml == Path("README.meta.yml")
+    assert sp.meta_json_path == Path("README.meta.json")
+    assert sp.meta_yaml_path == Path("README.meta.yml")
     assert sp.assets_dir == Path("README.assets")
 
 
@@ -39,8 +39,8 @@ def test_path_properties_multiple_extensions():
     """Test path properties for files with multiple extensions."""
     sp = SidematterPath(Path("data.tar.gz"))
 
-    assert sp.meta_json == Path("data.tar.meta.json")
-    assert sp.meta_yaml == Path("data.tar.meta.yml")
+    assert sp.meta_json_path == Path("data.tar.meta.json")
+    assert sp.meta_yaml_path == Path("data.tar.meta.yml")
     assert sp.assets_dir == Path("data.tar.assets")
 
 
@@ -64,11 +64,11 @@ def test_resolve_meta_json_precedence():
         doc_path.touch()
 
         sp = SidematterPath(doc_path)
-        sp.meta_json.write_text('{"title": "Test"}')
-        sp.meta_yaml.write_text("title: Test")
+        sp.meta_json_path.write_text('{"title": "Test"}')
+        sp.meta_yaml_path.write_text("title: Test")
 
         resolved = sp.resolve_meta()
-        assert resolved == sp.meta_json
+        assert resolved == sp.meta_json_path
 
 
 def test_resolve_meta_yaml_only():
@@ -78,10 +78,28 @@ def test_resolve_meta_yaml_only():
         doc_path.touch()
 
         sp = SidematterPath(doc_path)
-        sp.meta_yaml.write_text("title: Test")
+        sp.meta_yaml_path.write_text("title: Test")
 
         resolved = sp.resolve_meta()
-        assert resolved == sp.meta_yaml
+        assert resolved == sp.meta_yaml_path
+
+
+def test_rename_as():
+    """Test Sidematter.rename_as preserves metadata format."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src_path = Path(tmpdir) / "source.md"
+        dest_path = Path(tmpdir) / "dest.md"
+
+        # Create a sidematter with JSON metadata
+        src_sm = SidematterPath(src_path)
+        src_sm.meta_json_path.write_text('{"test": true}')
+
+        sidematter = resolve_sidematter(src_path)
+        renamed = sidematter.rename_as(dest_path)
+
+        dest_sm = SidematterPath(dest_path)
+        assert renamed.primary == dest_path
+        assert renamed.meta_path == dest_sm.meta_json_path
 
 
 ## Metadata Loading Tests
@@ -106,7 +124,7 @@ def test_load_meta_json():
 
         sp = SidematterPath(doc_path)
         test_data = {"title": "Test", "tags": ["python", "test"]}
-        sp.meta_json.write_text(json.dumps(test_data))
+        sp.meta_json_path.write_text(json.dumps(test_data))
 
         meta = sp.load_meta()
         assert meta == test_data
@@ -125,7 +143,7 @@ def test_load_meta_yaml():
               - python
               - test
         """).strip()
-        sp.meta_yaml.write_text(yaml_content)
+        sp.meta_yaml_path.write_text(yaml_content)
 
         meta = sp.load_meta()
         assert meta["title"] == "Test Document"
@@ -139,7 +157,7 @@ def test_load_meta_invalid_json():
         doc_path.touch()
 
         sp = SidematterPath(doc_path)
-        sp.meta_json.write_text("{ invalid json")
+        sp.meta_json_path.write_text("{ invalid json")
 
         with pytest.raises(SidematterError) as exc_info:
             sp.load_meta()
@@ -155,7 +173,7 @@ def test_load_meta_invalid_yaml():
 
         sp = SidematterPath(doc_path)
         # Use actually invalid YAML - unclosed bracket
-        sp.meta_yaml.write_text("title: Test\ndata: [unclosed")
+        sp.meta_yaml_path.write_text("title: Test\ndata: [unclosed")
 
         with pytest.raises(SidematterError) as exc_info:
             sp.load_meta()
@@ -212,7 +230,7 @@ def test_load_meta_sidecar_precedence_over_frontmatter():
         sp = SidematterPath(doc_path)
 
         # Create a sidecar file
-        sp.meta_yaml.write_text("title: Sidecar Title\nsource: sidecar")
+        sp.meta_yaml_path.write_text("title: Sidecar Title\nsource: sidecar")
 
         # Should load from sidecar, not frontmatter
         meta = sp.load_meta()
@@ -260,8 +278,8 @@ def test_write_meta_yaml_dict():
         test_data = {"title": "Test", "tags": ["python"]}
 
         written_path = sp.write_meta(test_data, fmt="yaml")
-        assert written_path == sp.meta_yaml
-        assert sp.meta_yaml.exists()
+        assert written_path == sp.meta_yaml_path
+        assert sp.meta_yaml_path.exists()
 
         # Verify content
         loaded = sp.load_meta()
@@ -278,8 +296,8 @@ def test_write_meta_json_dict():
         test_data = {"title": "Test", "tags": ["python"]}
 
         written_path = sp.write_meta(test_data, fmt="json")
-        assert written_path == sp.meta_json
-        assert sp.meta_json.exists()
+        assert written_path == sp.meta_json_path
+        assert sp.meta_json_path.exists()
 
         # Verify content
         loaded = sp.load_meta()
@@ -296,7 +314,7 @@ def test_write_meta_raw_string():
         raw_yaml = "title: Custom YAML\ntags: [test]\n"
 
         sp.write_meta(raw_yaml, fmt="yaml")
-        content = sp.meta_yaml.read_text()
+        content = sp.meta_yaml_path.read_text()
         assert content == raw_yaml
 
 
@@ -309,17 +327,17 @@ def test_write_meta_none_removes_files():
         sp = SidematterPath(doc_path)
 
         # Create both files
-        sp.meta_json.write_text('{"test": true}')
-        sp.meta_yaml.write_text("test: true")
+        sp.meta_json_path.write_text('{"test": true}')
+        sp.meta_yaml_path.write_text("test: true")
 
-        assert sp.meta_json.exists()
-        assert sp.meta_yaml.exists()
+        assert sp.meta_json_path.exists()
+        assert sp.meta_yaml_path.exists()
 
         # Write None should remove both
         sp.write_meta(None)
 
-        assert not sp.meta_json.exists()
-        assert not sp.meta_yaml.exists()
+        assert not sp.meta_json_path.exists()
+        assert not sp.meta_yaml_path.exists()
 
 
 def test_write_meta_creates_parents():
@@ -336,8 +354,8 @@ def test_write_meta_creates_parents():
         sp.write_meta(test_data, fmt="yaml")
 
         # Should have created parents
-        assert sp.meta_yaml.exists()
-        assert sp.meta_yaml.parent.exists()
+        assert sp.meta_yaml_path.exists()
+        assert sp.meta_yaml_path.parent.exists()
 
 
 ## Asset Tests
@@ -442,7 +460,7 @@ def test_resolve_sidematter_empty():
         sidematter = resolve_sidematter(doc_path)
 
         assert isinstance(sidematter, Sidematter)
-        assert sidematter.doc_path == doc_path
+        assert sidematter.primary == doc_path
         assert sidematter.meta_path is None
         assert sidematter.meta == {}
         assert sidematter.assets_path is None
@@ -461,7 +479,7 @@ def test_resolve_sidematter_with_metadata():
 
         sidematter = resolve_sidematter(doc_path)
 
-        assert sidematter.meta_path == sp.meta_yaml
+        assert sidematter.meta_path == sp.meta_yaml_path
         assert sidematter.meta == test_data
 
 
@@ -490,7 +508,7 @@ def test_resolve_sidematter_string_path():
         # Pass string instead of Path
         sidematter = resolve_sidematter(str(doc_path))
 
-        assert sidematter.doc_path == doc_path
+        assert sidematter.primary == doc_path
 
 
 def test_resolve_sidematter_with_frontmatter():
@@ -540,7 +558,7 @@ def test_full_workflow():
         chart_path = sp.copy_asset(chart_src, "chart.png")
 
         # Verify everything
-        assert sp.meta_yaml.exists()
+        assert sp.meta_yaml_path.exists()
         assert chart_path.exists()
         assert chart_path == sp.assets_dir / "chart.png"
 
