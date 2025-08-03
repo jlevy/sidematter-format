@@ -151,23 +151,20 @@ class SidematterPath:
     def resolve_assets(self) -> Path | None:
         return self.assets_dir if self.assets_dir.is_dir() else None
 
-    def asset_path(self, name: str | Path, create_dir: bool = True) -> Path:
+    def asset_path(self, name: str | Path) -> Path:
         """
-        Return the canonical path for an asset **and** (optionally) create the
-        `.assets/` directory so callers can write to it immediately.
+        Path of an asset in the assets directory.
         """
-        if create_dir:
-            self.assets_dir.mkdir(parents=True, exist_ok=True)
-        return self.assets_dir / Path(name).name
+        return self.assets_dir / name
 
     def copy_asset(self, src: str | Path, dest_name: str | None = None) -> Path:
         """
-        Convenience wrapper: copy a file into the asset directory and return its
+        Convenience wrapper to copy a file into the asset directory and return its
         new path. Uses atomic copy to ensure file integrity.
         """
         src_path = Path(src)
         target = self.asset_path(dest_name or src_path.name)
-        copyfile_atomic(src_path, target)
+        copyfile_atomic(src_path, target, make_parents=True)
         return target
 
 

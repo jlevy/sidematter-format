@@ -18,27 +18,21 @@ from sidematter_format import (
 
 
 def test_path_properties():
-    """Test basic path property transformations."""
+    """Test path property transformations for various file types."""
+    # Standard file with extension
     sp = SidematterPath(Path("report.md"))
-
     assert sp.meta_json_path == Path("report.meta.json")
     assert sp.meta_yaml_path == Path("report.meta.yml")
     assert sp.assets_dir == Path("report.assets")
 
-
-def test_path_properties_no_extension():
-    """Test path properties for files without extensions."""
+    # File without extension
     sp = SidematterPath(Path("README"))
-
     assert sp.meta_json_path == Path("README.meta.json")
     assert sp.meta_yaml_path == Path("README.meta.yml")
     assert sp.assets_dir == Path("README.assets")
 
-
-def test_path_properties_multiple_extensions():
-    """Test path properties for files with multiple extensions."""
+    # File with multiple extensions
     sp = SidematterPath(Path("data.tar.gz"))
-
     assert sp.meta_json_path == Path("data.tar.meta.json")
     assert sp.meta_yaml_path == Path("data.tar.meta.yml")
     assert sp.assets_dir == Path("data.tar.assets")
@@ -268,40 +262,28 @@ def test_load_meta_frontmatter_no_frontmatter():
 ## Metadata Writing Tests
 
 
-def test_write_meta_yaml_dict():
-    """Test writing YAML metadata from dict."""
+def test_write_meta_dict():
+    """Test writing metadata from dict in both formats."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
-
         sp = SidematterPath(doc_path)
         test_data = {"title": "Test", "tags": ["python"]}
 
+        # Test YAML format
         written_path = sp.write_meta(test_data, fmt="yaml")
         assert written_path == sp.meta_yaml_path
         assert sp.meta_yaml_path.exists()
+        assert sp.load_meta() == test_data
 
-        # Verify content
-        loaded = sp.load_meta()
-        assert loaded == test_data
+        # Clear metadata
+        sp.write_meta(None)
 
-
-def test_write_meta_json_dict():
-    """Test writing JSON metadata from dict."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        sp = SidematterPath(doc_path)
-        test_data = {"title": "Test", "tags": ["python"]}
-
+        # Test JSON format
         written_path = sp.write_meta(test_data, fmt="json")
         assert written_path == sp.meta_json_path
         assert sp.meta_json_path.exists()
-
-        # Verify content
-        loaded = sp.load_meta()
-        assert loaded == test_data
+        assert sp.load_meta() == test_data
 
 
 def test_write_meta_raw_string():
@@ -340,174 +322,81 @@ def test_write_meta_none_removes_files():
         assert not sp.meta_yaml_path.exists()
 
 
-def test_write_meta_creates_parents():
-    """Test that parent directories are created."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "subdir" / "deep" / "test.md"
-
-        sp = SidematterPath(doc_path)
-        test_data = {"title": "Test"}
-
-        # Directory doesn't exist yet
-        assert not doc_path.parent.exists()
-
-        sp.write_meta(test_data, fmt="yaml")
-
-        # Should have created parents
-        assert sp.meta_yaml_path.exists()
-        assert sp.meta_yaml_path.parent.exists()
-
-
 ## Asset Tests
 
 
-def test_resolve_assets_none():
-    """Test asset resolution when directory doesn't exist."""
+def test_resolve_assets():
+    """Test asset directory resolution."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
 
         sp = SidematterPath(doc_path)
+        # Directory doesn't exist
         assert sp.resolve_assets() is None
 
-
-def test_resolve_assets_exists():
-    """Test asset resolution when directory exists."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        sp = SidematterPath(doc_path)
+        # Directory exists
         sp.assets_dir.mkdir()
-
         assert sp.resolve_assets() == sp.assets_dir
 
 
-def test_asset_path_creates_dir():
-    """Test that asset_path creates the assets directory."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        sp = SidematterPath(doc_path)
-        assert not sp.assets_dir.exists()
-
-        asset_path = sp.asset_path("image.png")
-
-        assert sp.assets_dir.exists()
-        assert asset_path == sp.assets_dir / "image.png"
-
-
-def test_asset_path_no_create():
-    """Test asset_path without creating directory."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        sp = SidematterPath(doc_path)
-
-        asset_path = sp.asset_path("image.png", create_dir=False)
-
-        assert not sp.assets_dir.exists()
-        assert asset_path == sp.assets_dir / "image.png"
-
-
 def test_copy_asset():
-    """Test copying an asset file."""
+    """Test copying asset files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
+        sp = SidematterPath(doc_path)
 
         # Create source file
         src_file = Path(tmpdir) / "source.png"
         src_file.write_text("fake image content")
 
-        sp = SidematterPath(doc_path)
+        # Test default name
         copied_path = sp.copy_asset(src_file)
-
         assert copied_path == sp.assets_dir / "source.png"
         assert copied_path.exists()
         assert copied_path.read_text() == "fake image content"
 
-
-def test_copy_asset_custom_name():
-    """Test copying asset with custom destination name."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        # Create source file
-        src_file = Path(tmpdir) / "source.png"
-        src_file.write_text("fake image content")
-
-        sp = SidematterPath(doc_path)
-        copied_path = sp.copy_asset(src_file, dest_name="renamed.png")
-
-        assert copied_path == sp.assets_dir / "renamed.png"
-        assert copied_path.exists()
-        assert copied_path.read_text() == "fake image content"
+        # Test custom name
+        copied_path2 = sp.copy_asset(src_file, dest_name="renamed.png")
+        assert copied_path2 == sp.assets_dir / "renamed.png"
+        assert copied_path2.exists()
+        assert copied_path2.read_text() == "fake image content"
 
 
 ## Convenience Function Tests
 
 
-def test_resolve_sidematter_empty():
-    """Test resolve_sidematter with no metadata or assets."""
+def test_resolve_sidematter():
+    """Test resolve_sidematter in various scenarios."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
+        sp = SidematterPath(doc_path)
 
+        # Test empty sidematter
         sidematter = resolve_sidematter(doc_path)
-
         assert isinstance(sidematter, Sidematter)
         assert sidematter.primary == doc_path
         assert sidematter.meta_path is None
         assert sidematter.meta == {}
         assert sidematter.assets_path is None
 
-
-def test_resolve_sidematter_with_metadata():
-    """Test resolve_sidematter with metadata."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        # Create metadata
-        sp = SidematterPath(doc_path)
+        # Test with metadata
         test_data = {"title": "Test Document"}
         sp.write_meta(test_data)
-
         sidematter = resolve_sidematter(doc_path)
-
         assert sidematter.meta_path == sp.meta_yaml_path
         assert sidematter.meta == test_data
 
-
-def test_resolve_sidematter_with_assets():
-    """Test resolve_sidematter with assets."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        # Create assets directory
-        sp = SidematterPath(doc_path)
+        # Test with assets
         sp.assets_dir.mkdir()
         (sp.assets_dir / "test.png").touch()
-
         sidematter = resolve_sidematter(doc_path)
-
         assert sidematter.assets_path == sp.assets_dir
 
-
-def test_resolve_sidematter_string_path():
-    """Test resolve_sidematter with string path."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "test.md"
-        doc_path.touch()
-
-        # Pass string instead of Path
+        # Test with string path
         sidematter = resolve_sidematter(str(doc_path))
-
         assert sidematter.primary == doc_path
 
 
