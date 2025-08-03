@@ -167,6 +167,21 @@ class SidematterPath:
         copyfile_atomic(src_path, target, make_parents=True)
         return target
 
+    def copy_assets_from(self, src_dir: str | Path, glob: str = "**/*") -> list[Path]:
+        """
+        Copy all files from a directory into the asset directory.
+        """
+        src_path = Path(src_dir)
+        if not src_path.is_dir():
+            raise ValueError(f"Asset source is not a directory: {src_path!r}")
+
+        self.assets_dir.mkdir(parents=True, exist_ok=True)
+        copied: list[Path] = []
+        for path in src_path.glob(glob):
+            if path.is_file():
+                copied.append(self.copy_asset(path))
+        return copied
+
 
 def resolve_sidematter(
     primary: str | Path, *, parse_meta: bool = True, use_frontmatter: bool = True

@@ -364,6 +364,69 @@ def test_copy_asset():
         assert copied_path2.read_text() == "fake image content"
 
 
+def test_copy_assets_from():
+    """Test copy_assets_from with various scenarios."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        doc_path = Path(tmpdir) / "test.md"
+        doc_path.touch()
+        sp = SidematterPath(doc_path)
+
+        # Test single file
+        src_dir = Path(tmpdir) / "single"
+        src_dir.mkdir()
+        (src_dir / "file.png").write_text("content")
+
+        copied = sp.copy_assets_from(src_dir)
+        assert len(copied) == 1
+        assert copied[0].name == "file.png"
+
+        # Test multiple files
+        src_dir2 = Path(tmpdir) / "multiple"
+        src_dir2.mkdir()
+        (src_dir2 / "a.png").write_text("a")
+        (src_dir2 / "b.jpg").write_text("b")
+        (src_dir2 / "c.txt").write_text("c")
+
+        copied = sp.copy_assets_from(src_dir2)
+        assert len(copied) == 3
+        assert {p.name for p in copied} == {"a.png", "b.jpg", "c.txt"}
+
+        # Test nested directories with default **/* pattern
+        src_dir3 = Path(tmpdir) / "nested"
+        src_dir3.mkdir()
+        (src_dir3 / "root.txt").write_text("root")
+        (src_dir3 / "sub").mkdir()
+        (src_dir3 / "sub" / "nested.png").write_text("nested")
+        (src_dir3 / "sub" / "deep").mkdir()
+        (src_dir3 / "sub" / "deep" / "file.txt").write_text("deep")
+
+        copied = sp.copy_assets_from(src_dir3)
+        assert len(copied) == 3
+        assert {p.name for p in copied} == {"root.txt", "nested.png", "file.txt"}
+
+        # Test custom glob pattern
+        src_dir4 = Path(tmpdir) / "filtered"
+        src_dir4.mkdir()
+        (src_dir4 / "keep.png").write_text("keep")
+        (src_dir4 / "skip.txt").write_text("skip")
+
+        copied = sp.copy_assets_from(src_dir4, glob="*.png")
+        assert len(copied) == 1
+        assert copied[0].name == "keep.png"
+
+        # Test empty directory still creates assets dir
+        empty_dir = Path(tmpdir) / "empty"
+        empty_dir.mkdir()
+
+        copied = sp.copy_assets_from(empty_dir)
+        assert len(copied) == 0
+        assert sp.assets_dir.exists()
+
+        # Test error on nonexistent source
+        with pytest.raises(ValueError, match="is not a directory"):
+            sp.copy_assets_from(Path(tmpdir) / "nonexistent")
+
+
 ## Convenience Function Tests
 
 
