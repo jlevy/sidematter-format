@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from sidematter_format import (
-    SidematterPath,
+    Sidematter,
     copy_with_sidematter,
     move_with_sidematter,
     remove_with_sidematter,
@@ -24,7 +24,7 @@ def create_test_file_with_sidematter(base_path: Path) -> None:
     base_path.write_text("# Test Document\n\nThis is a test document.")
 
     # Create metadata
-    sp = SidematterPath(base_path)
+    sp = Sidematter(base_path)
     sp.meta_json_path.write_text(json.dumps({"title": "Test", "author": "Test User"}))
 
     # Create assets
@@ -37,7 +37,7 @@ def create_test_file_yaml_meta(base_path: Path) -> None:
     """Helper to create a test file with YAML metadata."""
     base_path.write_text("# Test Document\n\nThis is a test document.")
 
-    sp = SidematterPath(base_path)
+    sp = Sidematter(base_path)
     sp.meta_yaml_path.write_text("title: Test\nauthor: Test User")
 
 
@@ -75,7 +75,7 @@ def test_copy_with_json_metadata():
         assert dest.read_text() == src.read_text()
 
         # Check metadata
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest_sp.meta_json_path.exists()
         assert json.loads(dest_sp.meta_json_path.read_text()) == {
             "title": "Test",
@@ -104,7 +104,7 @@ def test_copy_with_yaml_metadata():
         assert dest.read_text() == src.read_text()
 
         # Check metadata
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest_sp.meta_yaml_path.exists()
         assert dest_sp.meta_yaml_path.read_text() == "title: Test\nauthor: Test User"
 
@@ -168,14 +168,14 @@ def test_move_with_sidematter():
         move_with_sidematter(src, dest)
 
         # Check source is gone
-        src_sp = SidematterPath(src)
+        src_sp = Sidematter(src)
         assert not src.exists()
         assert not src_sp.meta_json_path.exists()
         assert not src_sp.assets_dir.exists()
 
         # Check destination exists
         assert dest.exists()
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest_sp.meta_json_path.exists()
         assert dest_sp.assets_dir.exists()
         assert (dest_sp.assets_dir / "image.png").exists()
@@ -222,7 +222,7 @@ def test_remove_with_sidematter():
 
         create_test_file_with_sidematter(test_file)
 
-        sp = SidematterPath(test_file)
+        sp = Sidematter(test_file)
         assert test_file.exists()
         assert sp.meta_json_path.exists()
         assert sp.assets_dir.exists()
@@ -252,7 +252,7 @@ def test_remove_partial_sidematter():
 
         # Create main file and metadata but no assets
         test_file.write_text("Test content")
-        sp = SidematterPath(test_file)
+        sp = Sidematter(test_file)
         sp.meta_yaml_path.write_text("title: Test")
 
         assert test_file.exists()
@@ -311,13 +311,13 @@ def test_copy_preserves_original():
         copy_with_sidematter(src, dest)
 
         # Original should still exist
-        src_sp = SidematterPath(src)
+        src_sp = Sidematter(src)
         assert src.exists()
         assert src_sp.meta_json_path.exists()
         assert src_sp.assets_dir.exists()
 
         # Copy should also exist
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest.exists()
         assert dest_sp.meta_json_path.exists()
         assert dest_sp.assets_dir.exists()
@@ -332,14 +332,14 @@ def test_copy_only_assets():
 
         # Create main file and assets but no metadata
         src.write_text("Test content")
-        src_sp = SidematterPath(src)
+        src_sp = Sidematter(src)
         src_sp.assets_dir.mkdir()
         (src_sp.assets_dir / "test.png").write_text("fake png")
 
         copy_with_sidematter(src, dest)
 
         assert dest.exists()
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest_sp.assets_dir.exists()
         assert (dest_sp.assets_dir / "test.png").exists()
         assert not dest_sp.meta_json_path.exists()
@@ -359,6 +359,6 @@ def test_copy_only_metadata():
         copy_with_sidematter(src, dest)
 
         assert dest.exists()
-        dest_sp = SidematterPath(dest)
+        dest_sp = Sidematter(dest)
         assert dest_sp.meta_yaml_path.exists()
         assert not dest_sp.assets_dir.exists()

@@ -1,7 +1,7 @@
 from .sidematter_format import (
+    ResolvedSidematter,
     Sidematter,
     SidematterError,
-    SidematterPath,
     resolve_sidematter,
 )
 from .sidematter_utils import (
@@ -12,8 +12,8 @@ from .sidematter_utils import (
 
 __all__ = [
     "SidematterError",
-    "SidematterPath",
     "Sidematter",
+    "ResolvedSidematter",
     "resolve_sidematter",
     "copy_with_sidematter",
     "move_with_sidematter",

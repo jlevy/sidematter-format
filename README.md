@@ -193,92 +193,61 @@ writing sidematter.
 ```python
 from sidematter_format import resolve_sidematter
 
-# Read all sidematter for a document (immutable snapshot)
-sm = resolve_sidematter("report.md")
-print(sm.primary)  # Path('report.md')
-print(sm.meta)  # {'title': 'Q3 Report', 'author': 'Jane Doe', ...}
-print(sm.meta_path)  # Path('report.meta.yml') or None
-print(sm.assets_path)  # Path('report.assets') or None
+# Read all sidematter for a document by checking the filesystem.
+# Returns an immutable ResolvedSidematter.
+paths = resolve_sidematter("report.md")  
+print(paths.primary)  # Path('report.md')
+print(paths.meta)  # {'title': 'Q3 Report', 'author': 'Jane Doe', ...}
+print(paths.meta_path)  # Path('report.meta.yml') or None
+print(paths.assets_path)  # Path('report.assets') or None
 ```
 
 ### Writing Metadata
 
 ```python
-from sidematter_format import SidematterPath
+from sidematter_format import Sidematter
 
-# Create a SidematterPath for read/write operations
-spath = SidematterPath(Path("report.md"))
+# Create a Sidematter object for read/write operations
+sm = Sidematter(Path("report.md"))
 
 # Write metadata as YAML (default)
 metadata = {
     "title": "Q3 Financial Analysis",
-    "author": "Jane Doe",
+    "author": "Jane Doe"
     "tags": ["finance", "quarterly"]
 }
-spath.write_meta(metadata)
+sm.write_meta(metadata)
 
 # Write metadata as JSON
-spath.write_meta(metadata, fmt="json")
+sm.write_meta(metadata, fmt="json")
 
 # Write pre-formatted YAML/JSON string
-spath.write_meta("title: My Report\nauthor: Jane Doe\n")
+sm.write_meta("title: My Report\nauthor: Jane Doe\n")
 
 # Remove all metadata files
-spath.write_meta(None)
+sm.write_meta(None)
 ```
 
 ### Managing Assets
 
 ```python
-from sidematter_format import SidematterPath
+from sidematter_format import Sidematter
 from pathlib import Path
 
-spath = SidematterPath(Path("report.md"))
+sm = Sidematter(Path("report.md"))
 
 # Get the path for an asset (creates .assets/ directory)
-chart_path = spath.asset_path("chart.png")
+chart_path = sm.asset_path("chart.png")
 # Returns: Path('report.assets/chart.png')
 
 # Copy a file into the assets directory
-spath.copy_asset("~/Downloads/chart.png")
+sm.add_asset("~/Downloads/chart.png")
 # or with a custom name:
-spath.copy_asset("~/Downloads/fig1.png", dest_name="chart.png")
+sm.add_asset("~/Downloads/fig1.png", dest_name="chart.png")
 
 # Check if assets directory exists
-if spath.resolve_assets():
-    print(f"Assets found at: {spath.assets_dir}")
-```
-
-### Complete Example
-
-```python
-from pathlib import Path
-from sidematter_format import SidematterPath
-
-# Create a new document with sidematter
-doc_path = Path("analysis.md")
-doc_path.write_text("# Sales Analysis\n\nSee the trends chart below.")
-
-spath = SidematterPath(doc_path)
-
-# Add metadata
-spath.write_meta({
-    "title": "2024 Sales Analysis",
-    "author": "Data Team",
-    "created_at": "2024-01-15",
-    "version": "1.0"
-})
-
-# Add assets
-spath.copy_asset("charts/trends.png")
-spath.copy_asset("data/raw_sales.csv")
-
-# Later, read everything back
-from sidematter_format import resolve_sidematter
-
-data = resolve_sidematter(doc_path)
-print(f"Title: {data.meta.get('title')}")
-print(f"Assets: {list(data.assets_path.iterdir()) if data.assets_path else []}")
+if sm.resolve_assets():
+    print(f"Assets found at: {sm.assets_dir}")
 ```
 
 ## FAQ

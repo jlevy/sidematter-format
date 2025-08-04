@@ -23,7 +23,7 @@ def copy_with_sidematter(
 
     # Get source sidematter and rename for destination
     src_sidematter = resolve_sidematter(src, parse_meta=False)
-    dest_sidematter = src_sidematter.rename_as(dest)
+    dest_sidematter = src_sidematter.renamed_as(dest)
 
     # Copy metadata if it exists
     if src_sidematter.meta_path is not None and dest_sidematter.meta_path is not None:
@@ -32,10 +32,10 @@ def copy_with_sidematter(
         )
 
     # Copy assets if they exist
-    if src_sidematter.assets_path is not None and dest_sidematter.assets_path is not None:
+    if src_sidematter.assets_dir is not None and dest_sidematter.assets_dir is not None:
         if make_parents:
-            dest_sidematter.assets_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(src_sidematter.assets_path, dest_sidematter.assets_path, dirs_exist_ok=True)
+            dest_sidematter.assets_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(src_sidematter.assets_dir, dest_sidematter.assets_dir, dirs_exist_ok=True)
 
     # Copy the main file
     copyfile_atomic(src, dest, make_parents=make_parents)
@@ -52,7 +52,7 @@ def move_with_sidematter(
 
     # Get source sidematter and rename for destination
     src_sidematter = resolve_sidematter(src, parse_meta=False)
-    dest_sidematter = src_sidematter.rename_as(dest)
+    dest_sidematter = src_sidematter.renamed_as(dest)
 
     if make_parents:
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -62,8 +62,8 @@ def move_with_sidematter(
         shutil.move(src_sidematter.meta_path, dest_sidematter.meta_path)
 
     # Move assets if they exist
-    if src_sidematter.assets_path is not None and dest_sidematter.assets_path is not None:
-        shutil.move(src_sidematter.assets_path, dest_sidematter.assets_path)
+    if src_sidematter.assets_dir is not None and dest_sidematter.assets_dir is not None:
+        shutil.move(src_sidematter.assets_dir, dest_sidematter.assets_dir)
 
     # Move the main file
     shutil.move(src, dest)
@@ -81,8 +81,8 @@ def remove_with_sidematter(file_path: str | Path) -> None:
         sidematter.meta_path.unlink(missing_ok=True)
 
     # Remove assets directory if it exists
-    if sidematter.assets_path is not None:
-        shutil.rmtree(sidematter.assets_path, ignore_errors=True)
+    if sidematter.assets_dir is not None:
+        shutil.rmtree(sidematter.assets_dir, ignore_errors=True)
 
     # Remove the main file
     path.unlink(missing_ok=True)

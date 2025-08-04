@@ -23,10 +23,11 @@ class SidematterError(RuntimeError):
 
 
 @dataclass(slots=True, frozen=True)
-class SidematterPath:
+class Sidematter:
     """
-    A lightweight wrapper around a *base document* that exposes all sidematter
-    locations plus helpers for reading / writing them.
+    A wrapper around a "primary" file that exposes reading and modifying sidematter
+    files. Includes helpers for resolving, finding, and reading/writing metadata and
+    assets.
     """
 
     primary: Path
@@ -46,7 +47,25 @@ class SidematterPath:
     def assets_dir(self) -> Path:
         return self.primary.with_name(f"{self.primary.stem}.{ASSETS_SUFFIX}")
 
-    # Metadata helpers
+    # Resolving and finding paths.
+
+    def resolve(
+        self, *, parse_meta: bool = True, use_frontmatter: bool = True
+    ) -> ResolvedSidematter:
+        """
+        Check filesystem for metadata, optionally including frontmatter, as well as
+        sidematter metadata and assets, and return a snapshot of what is currently present.
+        """
+        meta = None
+        if parse_meta:
+            meta = self.read_meta(use_frontmatter=use_frontmatter)
+
+        return ResolvedSidematter(
+            primary=self.primary,
+            meta_path=self.resolve_meta(),
+            meta=meta,
+            assets_dir=self.resolve_assets(),
+        )
 
     def resolve_meta(self) -> Path | None:
         """
@@ -59,7 +78,12 @@ class SidematterPath:
             return self.meta_yaml_path
         return None
 
-    def load_meta(self, *, use_frontmatter: bool = True) -> dict[str, Any]:
+    def resolve_assets(self) -> Path | None:
+        return self.assets_dir if self.assets_dir.is_dir() else None
+
+    # Reading and writing metadata.
+
+    def read_meta(self, *, use_frontmatter: bool = True) -> dict[str, Any]:
         """
         Load metadata following the precedence order:
         1. JSON sidecar (.meta.json)
@@ -94,18 +118,6 @@ class SidematterPath:
                 return {}
 
         return {}
-
-    def resolve(self, *, parse_meta: bool = True, use_frontmatter: bool = True) -> Sidematter:
-        meta = None
-        if parse_meta:
-            meta = self.load_meta(use_frontmatter=use_frontmatter)
-
-        return Sidematter(
-            primary=self.primary,
-            meta_path=self.resolve_meta(),
-            meta=meta,
-            assets_path=self.resolve_assets(),
-        )
 
     def write_meta(
         self,
@@ -148,16 +160,13 @@ class SidematterPath:
 
     # Asset helpers
 
-    def resolve_assets(self) -> Path | None:
-        return self.assets_dir if self.assets_dir.is_dir() else None
-
     def asset_path(self, name: str | Path) -> Path:
         """
         Path of an asset in the assets directory.
         """
         return self.assets_dir / name
 
-    def copy_asset(self, src: str | Path, dest_name: str | None = None) -> Path:
+    def add_asset(self, src: str | Path, dest_name: str | None = None) -> Path:
         """
         Convenience wrapper to copy a file into the asset directory and return its
         new path. Uses atomic copy to ensure file integrity.
@@ -179,13 +188,13 @@ class SidematterPath:
         copied: list[Path] = []
         for path in src_path.glob(glob):
             if path.is_file():
-                copied.append(self.copy_asset(path))
+                copied.append(self.add_asset(path))
         return copied
 
 
 def resolve_sidematter(
     primary: str | Path, *, parse_meta: bool = True, use_frontmatter: bool = True
-) -> Sidematter:
+) -> ResolvedSidematter:
     """
     Convenience function that returns an *immutable* snapshot of the sidematter
     found for a given document, based on checking the expected paths.
@@ -200,15 +209,13 @@ def resolve_sidematter(
         Sidematter object containing the document path, metadata path, metadata dict,
         and assets path.
     """
-    return SidematterPath(Path(primary)).resolve(
-        parse_meta=parse_meta, use_frontmatter=use_frontmatter
-    )
+    return Sidematter(Path(primary)).resolve(parse_meta=parse_meta, use_frontmatter=use_frontmatter)
 
 
 @dataclass(frozen=True)
-class Sidematter:
+class ResolvedSidematter:
     """
-    Snapshot of sidematter filenames and metadata.
+    Snapshot of sidematter filenames and metadata. It should
     This is a pure, immutable data class; it does not touch the filesystem.
     """
 
@@ -217,7 +224,7 @@ class Sidematter:
     meta_path: Path | None
     """Path to the metadata file, if found."""
 
-    assets_path: Path | None
+    assets_dir: Path | None
     """Path to the assets directory, if found."""
 
     meta: dict[str, Any] | None
@@ -228,14 +235,14 @@ class Sidematter:
         """
         Return primary path as well as metadata and assets folder path, if they exist.
         """
-        return [p for p in [self.primary, self.meta_path, self.assets_path] if p]
+        return [p for p in [self.primary, self.meta_path, self.assets_dir] if p]
 
-    def rename_as(self, new_primary: Path) -> Sidematter:
+    def renamed_as(self, new_primary: Path) -> ResolvedSidematter:
         """
         A convenience method for naming files: return a new Sidematter with the primary path
         renamed and the sidematter paths updated accordingly.
         """
-        new_sm = SidematterPath(new_primary)
+        new_sm = Sidematter(new_primary)
         new_meta_path = None
         if self.meta_path is not None:
             # Preserve the metadata format from the original
@@ -247,11 +254,11 @@ class Sidematter:
                 # Fallback: preserve whatever suffix the source has
                 new_meta_path = new_primary.with_suffix(self.meta_path.suffix)
 
-        new_assets_path = new_sm.assets_dir if self.assets_path is not None else None
+        new_assets_path = new_sm.assets_dir if self.assets_dir is not None else None
 
-        return Sidematter(
+        return ResolvedSidematter(
             primary=new_primary,
             meta_path=new_meta_path,
             meta=self.meta,
-            assets_path=new_assets_path,
+            assets_dir=new_assets_path,
         )
