@@ -188,21 +188,21 @@ found in this order:
 The Python implementation provides a simple reference implementation for reading and
 writing sidematter.
 
-### Reading Sidematter
+### Reading Sidematter Metadata and Assets
 
 ```python
-from sidematter_format import resolve_sidematter
+from sidematter_format import Sidematter
 
 # Read all sidematter for a document by checking the filesystem.
 # Returns an immutable ResolvedSidematter.
-paths = resolve_sidematter("report.md")  
+paths = Sidematter(Path("report.md")).resolve() 
 print(paths.primary)  # Path('report.md')
 print(paths.meta)  # {'title': 'Q3 Report', 'author': 'Jane Doe', ...}
 print(paths.meta_path)  # Path('report.meta.yml') or None
 print(paths.assets_path)  # Path('report.assets') or None
 ```
 
-### Writing Metadata
+### Writing Sidematter Metadata and Assets
 
 ```python
 from sidematter_format import Sidematter
@@ -226,15 +226,6 @@ sm.write_meta("title: My Report\nauthor: Jane Doe\n")
 
 # Remove all metadata files
 sm.write_meta(None)
-```
-
-### Managing Assets
-
-```python
-from sidematter_format import Sidematter
-from pathlib import Path
-
-sm = Sidematter(Path("report.md"))
 
 # Get the path for an asset (creates .assets/ directory)
 chart_path = sm.asset_path("chart.png")

@@ -11,7 +11,6 @@ from sidematter_format import (
     ResolvedSidematter,
     Sidematter,
     SidematterError,
-    resolve_sidematter,
 )
 
 ## Basic Path Property Tests
@@ -88,7 +87,7 @@ def test_rename_as():
         src_sm = Sidematter(src_path)
         src_sm.meta_json_path.write_text('{"test": true}')
 
-        sidematter = resolve_sidematter(src_path)
+        sidematter = Sidematter(src_path).resolve()
         renamed = sidematter.renamed_as(dest_path)
 
         dest_sm = Sidematter(dest_path)
@@ -431,14 +430,14 @@ def test_copy_assets_from():
 
 
 def test_resolve_sidematter():
-    """Test resolve_sidematter in various scenarios."""
+    """Test Sidematter(...).resolve() in various scenarios."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
         sm = Sidematter(doc_path)
 
         # Test empty sidematter
-        sidematter = resolve_sidematter(doc_path)
+        sidematter = Sidematter(doc_path).resolve()
         assert isinstance(sidematter, ResolvedSidematter)
         assert sidematter.primary == doc_path
         assert sidematter.meta_path is None
@@ -448,23 +447,23 @@ def test_resolve_sidematter():
         # Test with metadata
         test_data = {"title": "Test Document"}
         sm.write_meta(test_data)
-        sidematter = resolve_sidematter(doc_path)
+        sidematter = Sidematter(doc_path).resolve()
         assert sidematter.meta_path == sm.meta_yaml_path
         assert sidematter.meta == test_data
 
         # Test with assets
         sm.assets_dir.mkdir()
         (sm.assets_dir / "test.png").touch()
-        sidematter = resolve_sidematter(doc_path)
+        sidematter = Sidematter(doc_path).resolve()
         assert sidematter.assets_dir == sm.assets_dir
 
         # Test with string path
-        sidematter = resolve_sidematter(str(doc_path))
+        sidematter = Sidematter(Path(str(doc_path))).resolve()
         assert sidematter.primary == doc_path
 
 
 def test_resolve_sidematter_with_frontmatter():
-    """Test resolve_sidematter with frontmatter fallback."""
+    """Test Sidematter(...).resolve() with frontmatter fallback."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_content = dedent("""
@@ -478,14 +477,14 @@ def test_resolve_sidematter_with_frontmatter():
         doc_path.write_text(doc_content)
 
         # With use_frontmatter=True (default)
-        sidematter = resolve_sidematter(doc_path)
+        sidematter = Sidematter(doc_path).resolve()
         assert sidematter.meta is not None
         assert sidematter.meta["title"] == "Document with Frontmatter"
         assert sidematter.meta["version"] == 1.0
         assert sidematter.meta_path is None  # No sidecar file
 
         # With use_frontmatter=False
-        sidematter_no_fallback = resolve_sidematter(doc_path, use_frontmatter=False)
+        sidematter_no_fallback = Sidematter(doc_path).resolve(use_frontmatter=False)
         assert sidematter_no_fallback.meta == {}
 
 
@@ -519,6 +518,6 @@ def test_full_workflow():
         assert loaded_meta == metadata
 
         # Test convenience function
-        sidematter = resolve_sidematter(doc_path)
+        sidematter = Sidematter(doc_path).resolve()
         assert sidematter.meta == metadata
         assert sidematter.assets_dir == sm.assets_dir

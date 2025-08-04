@@ -28,6 +28,9 @@ class Sidematter:
     A wrapper around a "primary" file that exposes reading and modifying sidematter
     files. Includes helpers for resolving, finding, and reading/writing metadata and
     assets.
+
+    For simple reading, call `resolve()` immediately to get a `ResolvedSidematter`
+    object with all the sidematter paths and metadata.
     """
 
     primary: Path
@@ -55,6 +58,16 @@ class Sidematter:
         """
         Check filesystem for metadata, optionally including frontmatter, as well as
         sidematter metadata and assets, and return a snapshot of what is currently present.
+
+        Args:
+            primary: Path to the document file.
+            parse_meta: If True, parse the metadata from the document. Default is True.
+            use_frontmatter: If True and no sidecar files exist, attempt to read
+                frontmatter from the document itself. Default is True.
+
+        Returns:
+            Sidematter object containing the document path, metadata path, metadata dict,
+            and assets path.
         """
         meta = None
         if parse_meta:
@@ -190,26 +203,6 @@ class Sidematter:
             if path.is_file():
                 copied.append(self.add_asset(path))
         return copied
-
-
-def resolve_sidematter(
-    primary: str | Path, *, parse_meta: bool = True, use_frontmatter: bool = True
-) -> ResolvedSidematter:
-    """
-    Convenience function that returns an *immutable* snapshot of the sidematter
-    found for a given document, based on checking the expected paths.
-
-    Args:
-        primary: Path to the document file.
-        parse_meta: If True, parse the metadata from the document. Default is True.
-        use_frontmatter: If True and no sidecar files exist, attempt to read
-            frontmatter from the document itself. Default is True.
-
-    Returns:
-        Sidematter object containing the document path, metadata path, metadata dict,
-        and assets path.
-    """
-    return Sidematter(Path(primary)).resolve(parse_meta=parse_meta, use_frontmatter=use_frontmatter)
 
 
 @dataclass(frozen=True)
