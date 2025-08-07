@@ -4,10 +4,12 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from frontmatter_format import fmf_read_frontmatter, from_yaml_string, to_yaml_string
 from strif import atomic_output_file, copyfile_atomic
+
+from sidematter_format.json_conventions import to_json_string
 
 META_NAME = "meta"
 JSON_SUFFIX = f".{META_NAME}.json"
@@ -71,7 +73,11 @@ class Sidematter:
         """
         meta = None
         if parse_meta:
-            meta = self.read_meta(use_frontmatter=use_frontmatter)
+            try:
+                meta = self.read_meta(use_frontmatter=use_frontmatter)
+            except SidematterError:
+                # If can't parse metadata, just leave unresolved
+                pass
 
         return ResolvedSidematter(
             primary=self.primary,
@@ -118,9 +124,12 @@ class Sidematter:
             try:
                 if p.suffix == ".json":
                     return json.loads(p.read_text(encoding="utf-8"))
-                return from_yaml_string(p.read_text(encoding="utf-8")) or {}
+                parsed: Any = from_yaml_string(p.read_text(encoding="utf-8")) or {}
+                if not isinstance(parsed, dict):
+                    raise SidematterError(f"Metadata is not a dict: got {type(parsed)}: {p}")
+                return cast(dict[str, Any], parsed)
             except Exception as e:
-                raise SidematterError(f"Error loading metadata: {p}") from e
+                raise SidematterError(f"Error loading metadata: {p}: {e}") from e
 
         # Try frontmatter fallback if enabled and document exists
         if use_frontmatter and self.primary.exists():
@@ -134,42 +143,66 @@ class Sidematter:
 
     def write_meta(
         self,
-        data: dict[str, Any] | str | None,
+        data: dict[str, Any] | str,
         *,
-        fmt: Literal["yaml", "json"] = "yaml",
+        formats: Literal["yaml", "json", "all"] = "yaml",
         key_sort: Callable[[str], Any] | None = None,
         make_parents: bool = True,
     ) -> Path:
         """
-        Serialize `data` to YAML or JSON sidecar. If `data` is a raw string it is
-        written verbatim. Returns the path written.
+        Serialize `data` to one or both sidecar files according to `formats`.
+
+        If `data` is a raw string, it is written verbatim for the selected single format.
+        When `formats == "all"`, both YAML and JSON are written and returns the JSON path.
         """
-        if fmt not in ("yaml", "json"):
-            raise ValueError("fmt must be 'yaml' or 'json'")
+        if formats not in ("yaml", "json", "all"):
+            raise ValueError("formats must be 'yaml', 'json', or 'all'")
 
-        # Choose target path
-        p = self.meta_yaml_path if fmt == "yaml" else self.meta_json_path
+        fmts: list[str] = ["yaml", "json"] if formats == "all" else [formats]
 
+        # Require format for raw string data.
+        if isinstance(data, str) and len(fmts) > 1:
+            raise ValueError(
+                "Cannot write raw string to multiple formats; provide a dict or choose one format"
+            )
+
+        # Return-path rules
+        return_path: Path = (
+            self.meta_yaml_path if ("json" not in fmts and "yaml" in fmts) else self.meta_json_path
+        )
+
+        last_path: Path | None = None
         try:
-            if data is None:
-                # Remove both sidecars if they exist
-                self.meta_json_path.unlink(missing_ok=True)
-                self.meta_yaml_path.unlink(missing_ok=True)
-                return p
-
-            # Use atomic file writing to ensure integrity
-            with atomic_output_file(p, make_parents=make_parents) as temp_path:
-                if isinstance(data, str):  # Raw YAML/JSON already formatted
-                    temp_path.write_text(data, encoding="utf-8")
-                elif fmt == "json":
-                    temp_path.write_text(
-                        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-                    )
-                else:  # YAML from dict
-                    temp_path.write_text(to_yaml_string(data, key_sort=key_sort), encoding="utf-8")
-            return p
+            for fmt in fmts:
+                p = self.meta_yaml_path if fmt == "yaml" else self.meta_json_path
+                last_path = p
+                # Use atomic file writing to ensure integrity
+                with atomic_output_file(p, make_parents=make_parents) as temp_path:
+                    if isinstance(data, str):  # Raw YAML/JSON already formatted
+                        temp_path.write_text(data)
+                    elif fmt == "json":
+                        # Write JSON and trailing newline in a single call to avoid overwriting
+                        temp_path.write_text(to_json_string(data) + "\n")
+                    else:  # YAML from dict
+                        temp_path.write_text(to_yaml_string(data, key_sort=key_sort))
+            return return_path
         except Exception as e:
-            raise SidematterError(f"Error writing metadata to {p}") from e
+            raise SidematterError(f"Error writing metadata: {last_path or 'unknown path'}") from e
+
+    def delete_meta(
+        self,
+        *,
+        formats: Literal["yaml", "json", "all"] = "all",
+    ) -> None:
+        """
+        Delete sidecar metadata files according to `formats`.
+        """
+        if formats not in ("yaml", "json", "all"):
+            raise ValueError("formats must be 'yaml', 'json', or 'all'")
+        fmts: list[str] = ["yaml", "json"] if formats == "all" else [formats]
+        for fmt in fmts:
+            p = self.meta_yaml_path if fmt == "yaml" else self.meta_json_path
+            p.unlink(missing_ok=True)
 
     # Asset helpers
 

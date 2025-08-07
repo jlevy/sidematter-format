@@ -46,15 +46,16 @@ Sidematter format is easiest to illustrate by an example.
 Given a primary document `report.md`, some possible sidematter files would be:
 
 ```
-report.md
-report.meta.yml        # YAML metadata
+report.md              # Primary document
+report.meta.json       # JSON metadata
+report.meta.yml        # YAML metadata (can use in addition to or instead of JSON)
 report.assets/         # Asset directory
     figure1.png
     diagram.svg
     styles.css
 ```
 
-The document can reference assets with relative paths:
+The document and metadata can reference assets with relative paths:
 
 ```markdown
 # My Report
@@ -62,15 +63,6 @@ The document can reference assets with relative paths:
 ![Key findings](report.assets/figure1.png)
 
 See the [full diagram](report.assets/diagram.svg) for details.
-```
-
-More examples across different file types:
-
-```
-blog-post.md           → blog-post.meta.yml, blog-post.assets/
-index.html             → index.meta.json, index.assets/
-presentation.slides    → presentation.meta.yml, presentation.assets/
-notebook.ipynb         → notebook.meta.yml, notebook.assets/
 ```
 
 Example metadata content:
@@ -91,13 +83,21 @@ processing_history:
   - step: analysis
     timestamp: 2024-01-15T11:45:00Z
     tool: pandas_analyzer
-source_files:
-  - raw_data.csv
-  - market_trends.json
+image_files:
+  - report.assets/figure1.png
+  - report.assets/diagram.svg
 ```
 
-If desired, simple YAML metadata could instead be inserted as frontmatter on the file
-itself, and omitted from the sidematter:
+Metadata must be in JSON or YAML. The choice is flexible.
+For ease of reading, such as a frontend serving system, JSON is often better.
+For ease of manual editing, YAML is preferable.
+The implementation should look for both formats, so will read the metadata on either of
+these layouts seamlessly.
+If both are present, the convention is to prefer the JSON.
+
+If desired, sidecar metadata can also be omitted.
+Another good pattern is to use frontmatter format (simple YAML metadata inserted as
+frontmatter on the file itself), and omitted from the sidematter:
 
 ```
 report.md              # Main file with frontmatter format metadata in YAML
@@ -106,9 +106,6 @@ report.assets/         # Asset directory with extra files
     diagram.svg
     styles.css
 ```
-
-The implementation there looks for both formats, so will read the metadata on either of
-these layouts seamlessly.
 
 ## Goals of this Approach
 

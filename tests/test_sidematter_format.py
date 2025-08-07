@@ -270,16 +270,16 @@ def test_write_meta_dict():
         test_data = {"title": "Test", "tags": ["python"]}
 
         # Test YAML format
-        written_path = sm.write_meta(test_data, fmt="yaml")
+        written_path = sm.write_meta(test_data, formats="yaml")
         assert written_path == sm.meta_yaml_path
         assert sm.meta_yaml_path.exists()
         assert sm.read_meta() == test_data
 
         # Clear metadata
-        sm.write_meta(None)
+        sm.delete_meta()
 
         # Test JSON format
-        written_path = sm.write_meta(test_data, fmt="json")
+        written_path = sm.write_meta(test_data, formats="json")
         assert written_path == sm.meta_json_path
         assert sm.meta_json_path.exists()
         assert sm.read_meta() == test_data
@@ -294,13 +294,13 @@ def test_write_meta_raw_string():
         sm = Sidematter(doc_path)
         raw_yaml = "title: Custom YAML\ntags: [test]\n"
 
-        sm.write_meta(raw_yaml, fmt="yaml")
+        sm.write_meta(raw_yaml, formats="yaml")
         content = sm.meta_yaml_path.read_text()
         assert content == raw_yaml
 
 
-def test_write_meta_none_removes_files():
-    """Test that writing None removes metadata files."""
+def test_delete_meta_removes_files():
+    """Test that delete_meta removes metadata files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         doc_path = Path(tmpdir) / "test.md"
         doc_path.touch()
@@ -314,8 +314,8 @@ def test_write_meta_none_removes_files():
         assert sm.meta_json_path.exists()
         assert sm.meta_yaml_path.exists()
 
-        # Write None should remove both
-        sm.write_meta(None)
+        # delete_meta should remove both
+        sm.delete_meta()
 
         assert not sm.meta_json_path.exists()
         assert not sm.meta_yaml_path.exists()
@@ -501,7 +501,7 @@ def test_full_workflow():
 
         # Add metadata
         metadata = {"title": "Q3 Report", "author": "Jane Doe", "tags": ["finance", "quarterly"]}
-        sm.write_meta(metadata, fmt="yaml")
+        sm.write_meta(metadata, formats="yaml")
 
         # Add asset
         chart_src = Path(tmpdir) / "temp_chart.png"
