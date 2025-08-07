@@ -40,7 +40,7 @@ classifiers = [
 # ---- Main dependencies ----
 
 dependencies = [
-    "frontmatter-format>=0.2.2",
+    "frontmatter-format>=0.2.3",
     "strif>=3.0.1",
 ]
 
