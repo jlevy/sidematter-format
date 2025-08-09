@@ -12,75 +12,84 @@ from strif import copyfile_atomic
 from sidematter_format.sidematter_format import Sidematter
 
 
-def copy_with_sidematter(
-    src_path: str | Path, dest_path: str | Path, *, make_parents: bool = True
+def copy_sidematter(
+    src_path: str | Path,
+    dest_path: str | Path,
+    *,
+    make_parents: bool = True,
+    copy_original: bool = True,
+    copy_assets: bool = True,
+    copy_metadata: bool = True,
 ) -> None:
     """
     Copy a file with its sidematter files (metadata and assets).
+
+    By default copies the file and all its sidematter. Use the boolean
+    flags to selectively copy only certain components.
     """
     src = Path(src_path)
     dest = Path(dest_path)
 
-    # Get source sidematter and rename for destination
     src_paths = Sidematter(src).resolve(parse_meta=False)
     dest_paths = src_paths.renamed_as(dest)
 
-    # Copy metadata if it exists
-    if src_paths.meta_path is not None and dest_paths.meta_path is not None:
+    if copy_metadata and src_paths.meta_path is not None and dest_paths.meta_path is not None:
         copyfile_atomic(src_paths.meta_path, dest_paths.meta_path, make_parents=make_parents)
 
-    # Copy assets if they exist
-    if src_paths.assets_dir is not None and dest_paths.assets_dir is not None:
+    if copy_assets and src_paths.assets_dir is not None and dest_paths.assets_dir is not None:
         if make_parents:
             dest_paths.assets_dir.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(src_paths.assets_dir, dest_paths.assets_dir, dirs_exist_ok=True)
 
-    # Copy the main file
-    copyfile_atomic(src, dest, make_parents=make_parents)
+    if copy_original:
+        copyfile_atomic(src, dest, make_parents=make_parents)
 
 
-def move_with_sidematter(
-    src_path: str | Path, dest_path: str | Path, *, make_parents: bool = True
+def move_sidematter(
+    src_path: str | Path,
+    dest_path: str | Path,
+    *,
+    make_parents: bool = True,
+    move_original: bool = True,
+    move_assets: bool = True,
+    move_metadata: bool = True,
 ) -> None:
     """
     Move a file with its sidematter files (metadata and assets).
+
+    By default moves the file and all its sidematter. Use the boolean
+    flags to selectively move only certain components.
     """
     src = Path(src_path)
     dest = Path(dest_path)
 
-    # Get source sidematter and rename for destination
     src_paths = Sidematter(src).resolve(parse_meta=False)
     dest_paths = src_paths.renamed_as(dest)
 
     if make_parents:
         dest.parent.mkdir(parents=True, exist_ok=True)
 
-    # Move metadata if it exists
-    if src_paths.meta_path is not None and dest_paths.meta_path is not None:
+    if move_metadata and src_paths.meta_path is not None and dest_paths.meta_path is not None:
         shutil.move(src_paths.meta_path, dest_paths.meta_path)
 
-    # Move assets if they exist
-    if src_paths.assets_dir is not None and dest_paths.assets_dir is not None:
+    if move_assets and src_paths.assets_dir is not None and dest_paths.assets_dir is not None:
         shutil.move(src_paths.assets_dir, dest_paths.assets_dir)
 
-    # Move the main file
-    shutil.move(src, dest)
+    if move_original:
+        shutil.move(src, dest)
 
 
-def remove_with_sidematter(file_path: str | Path) -> None:
+def remove_sidematter(file_path: str | Path) -> None:
     """
     Remove a file with its sidematter files (metadata and assets).
     """
     path = Path(file_path)
     sidematter = Sidematter(path).resolve(parse_meta=False)
 
-    # Remove metadata file if it exists
     if sidematter.meta_path is not None:
         sidematter.meta_path.unlink(missing_ok=True)
 
-    # Remove assets directory if it exists
     if sidematter.assets_dir is not None:
         shutil.rmtree(sidematter.assets_dir, ignore_errors=True)
 
-    # Remove the main file
     path.unlink(missing_ok=True)
