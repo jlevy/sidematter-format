@@ -13,10 +13,8 @@ import pytest
 from sidematter_format import (
     Sidematter,
     copy_sidematter,
-    copy_with_sidematter,
     move_sidematter,
-    move_with_sidematter,
-    remove_with_sidematter,
+    remove_sidematter,
 )
 
 
@@ -115,7 +113,7 @@ def test_copy_make_parents():
 
         src.write_text("Test content")
 
-        copy_with_sidematter(src, dest, make_parents=True)
+        copy_sidematter(src, dest, make_parents=True)
 
         assert dest.exists()
         assert dest.read_text() == "Test content"
@@ -185,7 +183,7 @@ def test_move_make_parents():
 
         src.write_text("Test content")
 
-        move_with_sidematter(src, dest, make_parents=True)
+        move_sidematter(src, dest, make_parents=True)
 
         assert not src.exists()
         assert dest.exists()
@@ -204,7 +202,7 @@ def test_remove_regular_file():
         test_file.write_text("Hello world!")
         assert test_file.exists()
 
-        remove_with_sidematter(test_file)
+        remove_sidematter(test_file)
 
         assert not test_file.exists()
 
@@ -222,7 +220,7 @@ def test_remove_with_sidematter():
         assert sp.meta_json_path.exists()
         assert sp.assets_dir.exists()
 
-        remove_with_sidematter(test_file)
+        remove_sidematter(test_file)
 
         assert not test_file.exists()
         assert not sp.meta_json_path.exists()
@@ -235,7 +233,7 @@ def test_remove_nonexistent_file():
         tmpdir = Path(tmpdir)
         nonexistent = tmpdir / "nonexistent.txt"
 
-        remove_with_sidematter(nonexistent)
+        remove_sidematter(nonexistent)
 
 
 def test_remove_partial_sidematter():
@@ -252,7 +250,7 @@ def test_remove_partial_sidematter():
         assert sp.meta_yaml_path.exists()
         assert not sp.assets_dir.exists()
 
-        remove_with_sidematter(test_file)
+        remove_sidematter(test_file)
 
         assert not test_file.exists()
         assert not sp.meta_yaml_path.exists()
@@ -269,7 +267,7 @@ def test_copy_string_paths():
 
         Path(src_str).write_text("Test content")
 
-        copy_with_sidematter(src_str, dest_str)
+        copy_sidematter(src_str, dest_str)
 
         assert Path(dest_str).exists()
         assert Path(dest_str).read_text() == "Test content"

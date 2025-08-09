@@ -79,21 +79,7 @@ def move_sidematter(
         shutil.move(src, dest)
 
 
-def copy_with_sidematter(
-    src_path: str | Path, dest_path: str | Path, *, make_parents: bool = True
-) -> None:
-    """Deprecated: Use copy_sidematter instead."""
-    return copy_sidematter(src_path, dest_path, make_parents=make_parents)
-
-
-def move_with_sidematter(
-    src_path: str | Path, dest_path: str | Path, *, make_parents: bool = True
-) -> None:
-    """Deprecated: Use move_sidematter instead."""
-    return move_sidematter(src_path, dest_path, make_parents=make_parents)
-
-
-def remove_with_sidematter(file_path: str | Path) -> None:
+def remove_sidematter(file_path: str | Path) -> None:
     """
     Remove a file with its sidematter files (metadata and assets).
     """

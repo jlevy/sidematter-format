@@ -6,10 +6,8 @@ from .sidematter_format import (
 )
 from .sidematter_utils import (
     copy_sidematter,
-    copy_with_sidematter,
     move_sidematter,
-    move_with_sidematter,
-    remove_with_sidematter,
+    remove_sidematter,
 )
 from .yaml_conventions import register_default_yaml_representers
 
@@ -18,10 +16,8 @@ __all__ = [
     "Sidematter",
     "ResolvedSidematter",
     "copy_sidematter",
-    "copy_with_sidematter",
     "move_sidematter",
-    "move_with_sidematter",
-    "remove_with_sidematter",
+    "remove_sidematter",
     "to_json_string",
     "write_json_file",
     "register_default_yaml_representers",
