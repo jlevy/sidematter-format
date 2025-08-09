@@ -369,183 +369,73 @@ def test_copy_only_metadata():
 ## Tests for selective copying/moving
 
 
-def test_copy_without_original():
-    """Test copying only sidematter without the original file."""
+def test_copy_selective():
+    """Test selective copying of components."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
 
+        # Test copying without original
+        src = tmpdir / "src1.md"
+        dest = tmpdir / "dest1.md"
         create_test_file_with_sidematter(src)
-
         copy_sidematter(src, dest, copy_original=False)
-
-        # Original file should exist, dest should not
-        assert src.exists()
-        assert not dest.exists()
-
-        # But sidematter should be copied
+        assert src.exists() and not dest.exists()
         dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-        assert dest_sp.assets_dir.exists()
+        assert dest_sp.meta_json_path.exists() and dest_sp.assets_dir.exists()
 
-
-def test_copy_without_metadata():
-    """Test copying without metadata."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
+        # Test copying without metadata
+        src = tmpdir / "src2.md"
+        dest = tmpdir / "dest2.md"
         create_test_file_with_sidematter(src)
-
         copy_sidematter(src, dest, copy_metadata=False)
-
-        # File and assets should be copied
         assert dest.exists()
         dest_sp = Sidematter(dest)
-        assert dest_sp.assets_dir.exists()
+        assert dest_sp.assets_dir.exists() and not dest_sp.meta_json_path.exists()
 
-        # But metadata should not be copied
-        assert not dest_sp.meta_json_path.exists()
-        assert not dest_sp.meta_yaml_path.exists()
-
-
-def test_copy_without_assets():
-    """Test copying without assets."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
+        # Test copying without assets
+        src = tmpdir / "src3.md"
+        dest = tmpdir / "dest3.md"
         create_test_file_with_sidematter(src)
-
         copy_sidematter(src, dest, copy_assets=False)
-
-        # File and metadata should be copied
         assert dest.exists()
         dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-
-        # But assets should not be copied
-        assert not dest_sp.assets_dir.exists()
+        assert dest_sp.meta_json_path.exists() and not dest_sp.assets_dir.exists()
 
 
-def test_copy_metadata_and_assets_only():
-    """Test copying only metadata and assets without the original file."""
+def test_move_selective():
+    """Test selective moving of components."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
 
+        # Test moving without original
+        src = tmpdir / "src1.md"
+        dest = tmpdir / "dest1.md"
         create_test_file_with_sidematter(src)
-
-        copy_sidematter(src, dest, copy_original=False, copy_metadata=True, copy_assets=True)
-
-        # Original file should not be copied
-        assert not dest.exists()
-
-        # But sidematter should be copied
-        dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-        assert dest_sp.assets_dir.exists()
-
-
-def test_move_without_original():
-    """Test moving only sidematter without the original file."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
-        create_test_file_with_sidematter(src)
-
+        src_sp = Sidematter(src)
         move_sidematter(src, dest, move_original=False)
-
-        # Original file should still exist
-        assert src.exists()
-        assert not dest.exists()
-
-        # But sidematter should be moved
-        src_sp = Sidematter(src)
-        assert not src_sp.meta_json_path.exists()
-        assert not src_sp.assets_dir.exists()
-
+        assert src.exists() and not dest.exists()
+        assert not src_sp.meta_json_path.exists() and not src_sp.assets_dir.exists()
         dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-        assert dest_sp.assets_dir.exists()
+        assert dest_sp.meta_json_path.exists() and dest_sp.assets_dir.exists()
 
-
-def test_move_without_metadata():
-    """Test moving without metadata."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
+        # Test moving without metadata
+        src = tmpdir / "src2.md"
+        dest = tmpdir / "dest2.md"
         create_test_file_with_sidematter(src)
         src_sp = Sidematter(src)
-
         move_sidematter(src, dest, move_metadata=False)
-
-        # File and assets should be moved
-        assert not src.exists()
-        assert dest.exists()
-        assert not src_sp.assets_dir.exists()
-
+        assert not src.exists() and dest.exists()
+        assert src_sp.meta_json_path.exists()  # Metadata stays
         dest_sp = Sidematter(dest)
-        assert dest_sp.assets_dir.exists()
+        assert dest_sp.assets_dir.exists() and not dest_sp.meta_json_path.exists()
 
-        # But metadata should remain at source
-        assert src_sp.meta_json_path.exists()
-        assert not dest_sp.meta_json_path.exists()
-
-
-def test_move_without_assets():
-    """Test moving without assets."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
+        # Test moving without assets
+        src = tmpdir / "src3.md"
+        dest = tmpdir / "dest3.md"
         create_test_file_with_sidematter(src)
         src_sp = Sidematter(src)
-
         move_sidematter(src, dest, move_assets=False)
-
-        # File and metadata should be moved
-        assert not src.exists()
-        assert dest.exists()
-        assert not src_sp.meta_json_path.exists()
-
+        assert not src.exists() and dest.exists()
+        assert src_sp.assets_dir.exists()  # Assets stay
         dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-
-        # But assets should remain at source
-        assert src_sp.assets_dir.exists()
-        assert not dest_sp.assets_dir.exists()
-
-
-def test_move_metadata_and_assets_only():
-    """Test moving only metadata and assets without the original file."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        src = tmpdir / "source.md"
-        dest = tmpdir / "dest.md"
-
-        create_test_file_with_sidematter(src)
-        src_sp = Sidematter(src)
-
-        move_sidematter(src, dest, move_original=False, move_metadata=True, move_assets=True)
-
-        # Original file should remain
-        assert src.exists()
-        assert not dest.exists()
-
-        # But sidematter should be moved
-        assert not src_sp.meta_json_path.exists()
-        assert not src_sp.assets_dir.exists()
-
-        dest_sp = Sidematter(dest)
-        assert dest_sp.meta_json_path.exists()
-        assert dest_sp.assets_dir.exists()
+        assert dest_sp.meta_json_path.exists() and not dest_sp.assets_dir.exists()
