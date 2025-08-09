@@ -9,7 +9,7 @@ from pathlib import Path
 
 from strif import copyfile_atomic
 
-from sidematter_format.sidematter_format import Sidematter
+from sidematter_format.sidematter_format import ResolvedSidematter, Sidematter
 
 
 def copy_sidematter(
@@ -20,12 +20,14 @@ def copy_sidematter(
     copy_original: bool = True,
     copy_assets: bool = True,
     copy_metadata: bool = True,
-) -> None:
+) -> ResolvedSidematter:
     """
     Copy a file with its sidematter files (metadata and assets).
 
     By default copies the file and all its sidematter. Use the boolean
     flags to selectively copy only certain components.
+
+    Returns the resolved target Sidematter to indicate what was actually copied.
     """
     src = Path(src_path)
     dest = Path(dest_path)
@@ -44,6 +46,9 @@ def copy_sidematter(
     if copy_original:
         copyfile_atomic(src, dest, make_parents=make_parents)
 
+    # Return the resolved target Sidematter to show what was actually copied
+    return Sidematter(dest).resolve(parse_meta=False)
+
 
 def move_sidematter(
     src_path: str | Path,
@@ -53,12 +58,14 @@ def move_sidematter(
     move_original: bool = True,
     move_assets: bool = True,
     move_metadata: bool = True,
-) -> None:
+) -> ResolvedSidematter:
     """
     Move a file with its sidematter files (metadata and assets).
 
     By default moves the file and all its sidematter. Use the boolean
     flags to selectively move only certain components.
+
+    Returns the resolved target Sidematter to indicate what was actually moved.
     """
     src = Path(src_path)
     dest = Path(dest_path)
@@ -77,6 +84,9 @@ def move_sidematter(
 
     if move_original:
         shutil.move(src, dest)
+
+    # Return the resolved target Sidematter to show what was actually moved
+    return Sidematter(dest).resolve(parse_meta=False)
 
 
 def remove_sidematter(file_path: str | Path) -> None:
