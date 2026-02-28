@@ -7,8 +7,12 @@ End-to-end project maintenance: upgrade the copier template, upgrade all deps,
 verify everything is clean, perform a full engineering review, push a PR, and
 monitor CI.
 
-Reference: [docs/development.md](../../development.md) for dev workflows and
-Makefile targets.
+## References
+
+- [pyproject.toml](../../../pyproject.toml) - deps, build config, tool settings
+- [.copier-answers.yml](../../../.copier-answers.yml) - template version tracking
+- [Makefile](../../../Makefile) - dev workflow shortcuts
+- [docs/development.md](../../development.md) - dev setup and workflows
 
 ## Instructions
 
@@ -21,7 +25,10 @@ each logical group of changes (not one giant commit).
 copier update --defaults --trust
 ```
 
+- Check `.copier-answers.yml` for the new template version.
 - Resolve any merge conflicts in `pyproject.toml` or other files.
+- Preserve project-specific customizations (for example: Python version
+  constraints, CI matrix choices, or license year ranges).
 - Review every changed file — don't blindly accept. Verify docs moves, deleted
   files, and config changes make sense.
 - Commit with a message listing key template changes.
@@ -59,13 +66,16 @@ tbd guidelines python-modern-guidelines
 Check for:
 
 - Broken, stale, or incomplete docstrings
+- Missing functionality or broken entry points
+- Incomplete feature coverage (e.g. write paths that lack matching read paths)
 - Inconsistent behavior between similar functions (e.g. trailing newlines,
   error handling conventions)
 - Type annotation gaps or `Any` leaks
 - Dead code, stale TODO comments, unnecessary abstractions
+- Test coverage gaps
 - Security issues at system boundaries
 
-Fix issues found, run `make` again, commit.
+Fix issues found, run `make lint` and `make test` after each fix, then commit.
 
 ### 5. Second review pass
 
