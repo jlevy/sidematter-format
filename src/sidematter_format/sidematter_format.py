@@ -62,13 +62,12 @@ class Sidematter:
         sidematter metadata and assets, and return a snapshot of what is currently present.
 
         Args:
-            primary: Path to the document file.
             parse_meta: If True, parse the metadata from the document. Default is True.
             use_frontmatter: If True and no sidecar files exist, attempt to read
                 frontmatter from the document itself. Default is True.
 
         Returns:
-            Sidematter object containing the document path, metadata path, metadata dict,
+            ResolvedSidematter containing the document path, metadata path, metadata dict,
             and assets path.
         """
         meta = None
@@ -241,7 +240,7 @@ class Sidematter:
 @dataclass(frozen=True)
 class ResolvedSidematter:
     """
-    Snapshot of sidematter filenames and metadata. It should
+    Snapshot of sidematter filenames and metadata.
     This is a pure, immutable data class; it does not touch the filesystem.
     """
 
