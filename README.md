@@ -127,6 +127,16 @@ report.assets/         # Asset directory with extra files
 The sidematter format defines naming conventions for files and directories related to a
 *base document*, which can be any file, with any name.
 
+### Component Support
+
+Sidematter has two independent components:
+
+- **Metadata component:** sidecar metadata files (`*.meta.json`, `*.meta.yml`)
+- **Assets component:** sidecar asset directory (`*.assets/`)
+
+Implementations MAY support either component independently, or both.
+Implementations SHOULD clearly document which components they support.
+
 ### Path Transformation Rule
 
 Given a base document with filename `basename.extension`, the sidematter files are:
@@ -144,6 +154,8 @@ name, then appending the sidematter suffix:
 * For files with multiple extensions (e.g., `data.tar.gz`), only the final extension is
   dropped: `data.tar.gz` → `data.tar.meta.yml`.
 
+* Another example: `some-file.form.md` → `some-file.form.meta.yml`.
+
 ### Metadata Schema
 
 * The schema of metadata files is **free-form and tool-dependent**. Common metadata
@@ -154,6 +166,9 @@ name, then appending the sidematter suffix:
   JSON is often preferred for machine-generated metadata due to ubiquitous parsing
   support. YAML is often better for human-authored or human-readable metadata due to
   readability and comment support.
+
+* Canonical metadata filenames are `.meta.json` and `.meta.yml`.
+  Implementations MAY also accept `.meta.yaml` for read compatibility.
 
 * If there is a schema associated with the metadata, follow the standard convention of
   linking to it with the `$schema` key, so that tools like IDEs can validate the schema.
@@ -168,7 +183,9 @@ found in this order:
 
 2. Metadata YAML: `basename.meta.yml`
 
-3. Optionally, implementations can look for
+3. Metadata YAML (alternate extension): `basename.meta.yaml` (optional compatibility)
+
+4. Optionally, implementations can look for
    [frontmatter](https://github.com/jlevy/frontmatter-format) on the file itself (if it
    is a text file)
 
