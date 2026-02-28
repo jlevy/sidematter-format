@@ -46,14 +46,14 @@ wheels = [
 
 [[package]]
 name = "frontmatter-format"
-version = "0.2.3"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ruamel-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ef/96/b72e36adc8b6c1fe6cf8f128b8f2c53c2e3788a9a7e6d7f3b5b41d7dbf83/frontmatter_format-0.2.3.tar.gz", hash = "sha256:46fd0dc1a735934fc1685ea86fbed8ce976ab5e4dca440ef8421d2b4ab309154", size = 436085, upload-time = "2025-08-07T21:56:43.53Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/bf/eb850cd4d32cafc342dbb3a8b64058511da188c7270a61219788ac141ca6/frontmatter_format-0.3.0.tar.gz", hash = "sha256:4ebd3d3068315945d418dfd320ce6ed727b90e1605473c6244039d34cbcb0253", size = 439709, upload-time = "2026-02-28T22:37:37.068Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/6d/3b9b8bd448920a87f78ab0f3e346f3275c3f567f2636d026529609849a6c/frontmatter_format-0.2.3-py3-none-any.whl", hash = "sha256:313e1a837b9f1d94ded85000e0a44081db8a8f8f26e385dd87fb8b1f56dcbf97", size = 13985, upload-time = "2025-08-07T21:56:42.028Z" },
+    { url = "https://files.pythonhosted.org/packages/06/67/b003f8d851679714e00cc5353dd772027529d893b346f91279d0b9f17f17/frontmatter_format-0.3.0-py3-none-any.whl", hash = "sha256:55c1dafbcb0ca5dee5ff3e1dcb6c3fbde6d18860a2250c9d67779fd91c86c81e", size = 13824, upload-time = "2026-02-28T22:37:35.821Z" },
 ]
 
 [[package]]
@@ -237,7 +237,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "frontmatter-format", specifier = ">=0.2.3" },
+    { name = "frontmatter-format", specifier = ">=0.3.0" },
     { name = "strif", specifier = ">=3.0.1" },
 ]
 
