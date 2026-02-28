@@ -66,4 +66,4 @@ def write_json_file(value: Any, path: str | Path, *, indent: int | None = 2) -> 
     """
     p = Path(path)
     with atomic_output_file(p) as f:
-        f.write_text(to_json_string(value, indent=indent), encoding="utf-8")
+        f.write_text(to_json_string(value, indent=indent) + "\n", encoding="utf-8")
