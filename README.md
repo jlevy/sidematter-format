@@ -154,7 +154,7 @@ name, then appending the sidematter suffix:
 * For files with multiple extensions (e.g., `data.tar.gz`), only the final extension is
   dropped: `data.tar.gz` → `data.tar.meta.yml`.
 
-* Another example: `some-file.qa.md` → `some-file.qa.meta.yml`.
+* Another example: `some-file.form.md` → `some-file.form.meta.yml`.
 
 ### Metadata Schema
 
